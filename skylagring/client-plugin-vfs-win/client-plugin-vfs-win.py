@@ -13,7 +13,7 @@ class subinfo(info.infoclass):
             del self.targets[ver]
             self.svnTargets[ver] = self.versionInfo.format("ssh://git@gitea.owncloud.services:2222/client/client-plugin-vfs-win.git|${VERSION_MAJOR}.${VERSION_MINOR}|", ver)
 
-        self.description = "Skylagring frå Serit Fjordane IT - plugin"
+        self.description = "Skylagring fra Serit Fjordane IT - plugin"
         self.webpage = "https://serit.no/avdelinger/serit-fjordane-it/"
 
     def setDependencies(self):
