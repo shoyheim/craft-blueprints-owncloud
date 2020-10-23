@@ -16,17 +16,17 @@ class subinfo(info.infoclass):
     def setTargets(self):
         self.versionInfo.setDefaultValues(tarballUrl="https://download.owncloud.com/desktop/stable/owncloudclient-${VERSION}.tar.xz",
                                           tarballInstallSrc="owncloudclient-${VERSION}",
-                                          gitUrl="[git]https://github.com/owncloud/client")
+                                          gitUrl="[git]https://github.com/shoyheim/client")
 
         # we don't have that branche yet
         self.svnTargets["2.8"] = self.svnTargets["master"]
 
         self.description = "Intern Skylagring"
         self.displayName = "Intern Skylagring"
-        self.webpage = "https://serit.no/fjordane"
+        self.webpage = "https://serit.no/avdelinger/serit-fjordane-it/"
 
     def setDependencies(self):
-        self.buildDependencies["shoyheim/craft-blueprints-owncloud"] = None
+        self.buildDependencies["shoyheim/craft-blueprints-skylagring"] = None
         self.buildDependencies["dev-utils/cmake"] = None
         self.buildDependencies["kde/frameworks/extra-cmake-modules"] = None
         self.buildDependencies["dev-utils/breakpad-tools"] = None
@@ -185,7 +185,7 @@ class Package(CMakePackageBase):
         self.defines["apppath"] = "Applications/KDE/" + self.applicationExecutable + ".app"
         self.defines["company"] = "Serit Fjordane IT"
         self.defines["shortcuts"] = [{"name" : self.subinfo.displayName , "target" : f"{self.defines['appname']}{CraftCore.compiler.executableSuffix}", "description" : self.subinfo.description}]
-        self.defines["icon"] = Path(self.buildDir()) / "src/gui/owncloud.ico"
+        self.defines["icon"] = Path(self.buildDir()) / "src/gui/skylagring.ico"
         self.defines["pkgproj"] = Path(self.buildDir()) / "admin/osx/macosx.pkgproj"
 
 
