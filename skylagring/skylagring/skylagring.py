@@ -26,7 +26,7 @@ class subinfo(info.infoclass):
         self.webpage = "https://serit.no/avdelinger/serit-fjordane-it/"
 
     def setDependencies(self):
-        self.buildDependencies["shoyheim/craft-blueprints-skylagring"] = None
+        self.buildDependencies["craft-blueprints-skylagring"] = None
         self.buildDependencies["dev-utils/cmake"] = None
         self.buildDependencies["kde/frameworks/extra-cmake-modules"] = None
         self.buildDependencies["dev-utils/breakpad-tools"] = None
