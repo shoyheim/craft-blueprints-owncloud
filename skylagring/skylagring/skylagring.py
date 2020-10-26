@@ -74,7 +74,7 @@ class Package(CMakePackageBase):
 
     @property
     def applicationExecutable(self):
-        return os.environ.get('ApplicationExecutable', 'owncloud')
+        return os.environ.get('ApplicationExecutable', 'InternSky')
 
     def fetch(self):
         if self.subinfo.options.dynamic.buildVfsWin:
