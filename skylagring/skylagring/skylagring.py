@@ -185,7 +185,7 @@ class Package(CMakePackageBase):
         self.defines["apppath"] = "Applications/KDE/" + self.applicationExecutable + ".app"
         self.defines["company"] = "Serit Fjordane IT"
         self.defines["shortcuts"] = [{"name" : self.subinfo.displayName , "target" : f"{self.defines['appname']}{CraftCore.compiler.executableSuffix}", "description" : self.subinfo.description}]
-        self.defines["icon"] = Path(self.buildDir()) / "src/gui/" + self.applicationExecutable + ".ico"
+        self.defines["icon"] = Path(self.buildDir()) / ("src/gui/" + self.applicationExecutable + ".ico")
         self.defines["pkgproj"] = Path(self.buildDir()) / "admin/osx/macosx.pkgproj"
 
 
