@@ -22,7 +22,7 @@ class subinfo(info.infoclass):
         self.svnTargets["2.8"] = self.svnTargets["master"]
 
         self.description = "Intern Skylagring"
-        self.displayName = "InternSky"
+        self.displayName = "Intern Skylagring"
         self.webpage = "https://serit.no/avdelinger/serit-fjordane-it/"
 
     def setDependencies(self):
