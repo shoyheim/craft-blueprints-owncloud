@@ -14,9 +14,7 @@ class subinfo(info.infoclass):
         self.options.dynamic.registerOption("enableCrashReporter", False)
 
     def setTargets(self):
-        self.versionInfo.setDefaultValues(tarballUrl="https://download.owncloud.com/desktop/stable/owncloudclient-${VERSION}.tar.xz",
-                                          tarballInstallSrc="owncloudclient-${VERSION}",
-                                          gitUrl="[git]https://github.com/shoyheim/client")
+        self.versionInfo.setDefaultValues(gitUrl="[git]https://github.com/shoyheim/client")
 
         # we don't have that branche yet
         self.svnTargets["2.8"] = self.svnTargets["master"]
