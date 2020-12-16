@@ -181,6 +181,7 @@ class Package(CMakePackageBase):
 
     def createPackage(self):
         self.blacklist_file.append(os.path.join(self.packageDir(), 'blacklist.txt'))
+        self.scriptname = os.path.join(self.packageDir(), 'skylagring.nsi')
         self.defines["appname"] = self.applicationExecutable
         self.defines["apppath"] = "Applications/KDE/" + self.applicationExecutable + ".app"
         self.defines["company"] = "Serit Fjordane IT"
