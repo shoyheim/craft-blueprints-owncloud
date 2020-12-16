@@ -36,7 +36,7 @@ ManifestDPIAware true
 
 
 Name "@{productname}"
-Caption "@{productname} @{version}"
+Caption "@{productname}" ; @{version}"
 
 OutFile "@{setupname}"
 
