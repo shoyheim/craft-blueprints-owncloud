@@ -201,6 +201,7 @@ Section
   ${Endif}
   
   !insertmacro UninstallExisting $0 $0
+	IfSilent +2
 	${If} $0 <> 0
 		MessageBox MB_YESNO|MB_ICONSTOP "Failed to uninstall old version, continue anyway? Error: $0" /SD IDYES IDYES +2
 			Abort
