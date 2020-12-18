@@ -26,7 +26,6 @@
 ; registry stuff
 !define regkey "Software\@{company}\@{productname}"
 !define uninstkey "Software\Microsoft\Windows\CurrentVersion\Uninstall\@{productname}"
-!define uninstkey32 "Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\@{productname}"
 !define runPath "Software\Microsoft\Windows\CurrentVersion\Run"
 
 BrandingText "Published by Serit Fjordane IT"
@@ -190,9 +189,13 @@ Section
   
 			
   ReadRegStr $0 HKLM "${uninstkey}" "UninstallString"
-  ${If} $0 == ""
-	ReadRegStr $0 HKLM "${uninstkey32}" "UninstallString"
-  ${Endif}
+  !if "@{architecture}" == "x64"
+  	${If} $0 == ""
+		SetRegView 32
+		ReadRegStr $0 HKLM "${uninstkey}" "UninstallString"
+		SetRegView 64
+  	${Endif}
+  !endif
   ${If} $0 == ""
 	StrCpy $0 "$INSTDIR\uninstall.exe"
   ${Endif}
