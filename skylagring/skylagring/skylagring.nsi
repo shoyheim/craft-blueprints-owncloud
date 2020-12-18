@@ -216,7 +216,7 @@ Section
   WriteRegStr SHCTX "${uninstkey}" "DisplayVersion" "@{version}"
   WriteRegDWORD SHCTX "${uninstkey}" "EstimatedSize" "@{estimated_size}"
   
-  WriteRegDWORD HKCU "${runPath}" "@{appname}" "$INSTDIR\@{appname}.exe"
+  WriteRegStr HKCU "${runPath}" "@{appname}" "$INSTDIR\@{appname}.exe"
 
   @{registry_hook}
 
