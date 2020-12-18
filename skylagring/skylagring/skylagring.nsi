@@ -27,7 +27,7 @@
 !define regkey "Software\@{company}\@{productname}"
 !define uninstkey "Software\Microsoft\Windows\CurrentVersion\Uninstall\@{productname}"
 !define uninstkey32 "Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\@{productname}"
-!define runPath "\Software\Microsoft\Windows\CurrentVersion\Run"
+!define runPath "Software\Microsoft\Windows\CurrentVersion\Run"
 
 BrandingText "Published by Serit Fjordane IT"
 
