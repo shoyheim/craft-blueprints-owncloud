@@ -68,7 +68,6 @@ Var StartMenuFolder
 !include "LogicLib.nsh"
 !include "x64.nsh"
 !include "process.nsh"
-!include "UAC.nsh" ;Used by the UAC elevation to install as user or admin.
 
 
 ;!define MUI_ICON
@@ -136,8 +135,7 @@ Function .onInstSuccess
 FunctionEnd
 	
 Function StartSkylagring
-    	;ExecShell "" "$INSTDIR\@{appname}.exe"
-	!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\@{appname}.exe" "" "" ""
+    	ExecShell "" "$INSTDIR\@{appname}.exe"
 FunctionEnd
 
 Function un.onInit
