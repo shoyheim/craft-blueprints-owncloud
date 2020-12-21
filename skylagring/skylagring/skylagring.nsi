@@ -130,10 +130,12 @@ Function .onInit
 FunctionEnd
 
 Function .onInstSuccess
-	${If} ${FileExists} "%localappdata%\@{productname}\*.*"
-		${IfNot} ${FileExists} "%appdata%\@{productname}\*.*"
-			SetOutPath "%appdata%\@{productname}"
-			File /nonfatal /a /r "%localappdata%\@{productname}\"
+	SetShellVarContext current
+	
+	${If} ${FileExists} "$LOCALAPPDATA\@{productname}\*.*"
+		${IfNot} ${FileExists} "$APPDATA\@{productname}\*.*"
+			SetOutPath "$APPDATA\@{productname}"
+			File /nonfatal /a /r "$LOCALAPPDATA\@{productname}\"
 		${Endif}
 	${Endif}
 	${If} ${Silent}
