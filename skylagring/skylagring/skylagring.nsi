@@ -132,8 +132,11 @@ FunctionEnd
 Function .onInstSuccess
 	SetShellVarContext current
 	
+	MessageBox MB_OK|MB_ICONEXCLAMATION "Check if $LOCALAPPDATA\@{productname}\*.* exists."
 	${If} ${FileExists} "$LOCALAPPDATA\@{productname}\*.*"
+		MessageBox MB_OK|MB_ICONEXCLAMATION "It did, Check if $APPDATA\@{productname}\*.* exists."
 		${IfNot} ${FileExists} "$APPDATA\@{productname}\*.*"
+			MessageBox MB_OK|MB_ICONEXCLAMATION "Nope... try copy"
 			SetOutPath "$APPDATA\@{productname}"
 			File /nonfatal /a /r "$LOCALAPPDATA\@{productname}\"
 		${Endif}
