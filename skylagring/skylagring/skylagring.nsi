@@ -133,7 +133,7 @@ Function .onInstSuccess
 	SetShellVarContext current
 	${If} ${FileExists} "$LOCALAPPDATA\@{productname}\*.*"
 		${IfNot} ${FileExists} "$APPDATA\@{productname}\*.*"
-			CreateDirectory $APPDATA\@{productname}
+			CreateDirectory "$APPDATA\@{productname}"
 			CopyFiles "$LOCALAPPDATA\@{productname}\*.cfg" "$APPDATA\@{productname}"
 		${Endif}
 	${Endif}
