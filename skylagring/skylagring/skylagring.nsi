@@ -68,6 +68,7 @@ Var StartMenuFolder
 !include "LogicLib.nsh"
 !include "x64.nsh"
 !include "process.nsh"
+!include "UAC.nsh" ;Used by the UAC elevation to install as user or admin.
 
 
 ;!define MUI_ICON
