@@ -100,7 +100,6 @@ Var StartMenuFolder
 !define MUI_FINISHPAGE_RUN_TEXT "Run @{productname}"
 !define MUI_FINISHPAGE_RUN_FUNCTION "StartSkylagring"
 !insertmacro MUI_PAGE_FINISH
-!insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_LANGUAGE "English"
 
@@ -129,8 +128,15 @@ Function .onInit
 ;	  MessageBox MB_OK|MB_ICONEXCLAMATION "Found previous installation location $0 at ${uninstkey}"
 ;	${Endif}
 FunctionEnd
+
+Function .onInstSuccess
+	${If} ${Silent}
+		Call StartSkylagring
+FunctionEnd
+	
 Function StartSkylagring
-    ExecShell "" "$INSTDIR\@{appname}.exe"
+    	;ExecShell "" "$INSTDIR\@{appname}.exe"
+	!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\@{appname}.exe" "" "" ""
 FunctionEnd
 
 Function un.onInit
@@ -201,8 +207,7 @@ Section
   ${Endif}
   
   !insertmacro UninstallExisting $0 $0
-	IfSilent +2
-	${If} $0 <> 0
+	${IfNot} ${Silent} ${AndIf} $0 <> 0
 		MessageBox MB_YESNO|MB_ICONSTOP "Failed to uninstall old version, continue anyway? Error: $0" /SD IDYES IDYES +2
 			Abort
 	${EndIf}
