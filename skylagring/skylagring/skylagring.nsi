@@ -131,13 +131,10 @@ FunctionEnd
 
 Function .onInstSuccess
 	SetShellVarContext current
-	
-	MessageBox MB_OK|MB_ICONEXCLAMATION "Check if $LOCALAPPDATA\@{productname}\*.* exists."
 	${If} ${FileExists} "$LOCALAPPDATA\@{productname}\*.*"
-		MessageBox MB_OK|MB_ICONEXCLAMATION "It did, Check if $APPDATA\@{productname}\*.* exists."
 		${IfNot} ${FileExists} "$APPDATA\@{productname}\*.*"
-			MessageBox MB_OK|MB_ICONEXCLAMATION "Nope... try copy"
-			CopyFiles "$LOCALAPPDATA\@{productname}\" "$APPDATA\@{productname}"
+			CreateDirectory $APPDATA\@{productname}
+			CopyFiles "$LOCALAPPDATA\@{productname}\*.cfg" "$APPDATA\@{productname}"
 		${Endif}
 	${Endif}
 	${If} ${Silent}
