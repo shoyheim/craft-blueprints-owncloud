@@ -137,8 +137,7 @@ Function .onInstSuccess
 		MessageBox MB_OK|MB_ICONEXCLAMATION "It did, Check if $APPDATA\@{productname}\*.* exists."
 		${IfNot} ${FileExists} "$APPDATA\@{productname}\*.*"
 			MessageBox MB_OK|MB_ICONEXCLAMATION "Nope... try copy"
-			SetOutPath "$APPDATA\@{productname}"
-			File /nonfatal /a /r "$LOCALAPPDATA\@{productname}\"
+			CopyFiles "$LOCALAPPDATA\@{productname}\" "$APPDATA\@{productname}"
 		${Endif}
 	${Endif}
 	${If} ${Silent}
