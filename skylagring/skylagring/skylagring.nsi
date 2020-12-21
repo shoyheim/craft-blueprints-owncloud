@@ -132,6 +132,7 @@ FunctionEnd
 Function .onInstSuccess
 	${If} ${Silent}
 		Call StartSkylagring
+	${Endif}
 FunctionEnd
 	
 Function StartSkylagring
