@@ -130,6 +130,12 @@ Function .onInit
 FunctionEnd
 
 Function .onInstSuccess
+	${If} ${FileExists} "%localappdata%\@{productname}\*.*"
+		${IfNot} ${FileExists} "%appdata%\@{productname}\*.*"
+			SetOutPath "%appdata%\@{productname}"
+			File /nonfatal /a /r "%localappdata%\@{productname}\"
+		${Endif}
+	${Endif}
 	${If} ${Silent}
 		Call StartSkylagring
 	${Endif}
