@@ -1,217 +1,313 @@
-import info
+; Copyright 2010 Patrick Spendrin <ps_ml@gmx.de>
+; Copyright 2016 Kevin Funk <kfunk@kde.org>
+; Copyright Hannah von Reth <vonreth@kde.org>
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions
+; are met:
+; 1. Redistributions of source code must retain the above copyright
+;    notice, this list of conditions and the following disclaimer.
+; 2. Redistributions in binary form must reproduce the above copyright
+;    notice, this list of conditions and the following disclaimer in the
+;    documentation and/or other materials provided with the distribution.
+;
+; THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+; ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+; ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+; OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+; HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+; LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+; OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+; SUCH DAMAGE.
 
-import configparser
-import os
-import io
-import re
-import sys
-import subprocess
-import glob
+; registry stuff
+!define regkey "Software\@{company}\@{productname}"
+!define uninstkey "Software\Microsoft\Windows\CurrentVersion\Uninstall\@{productname}"
+!define runPath "Software\Microsoft\Windows\CurrentVersion\Run"
 
-class subinfo(info.infoclass):
-    def registerOptions(self):
-        self.options.dynamic.registerOption("buildVfsWin", False)
-        self.options.dynamic.registerOption("enableCrashReporter", False)
+BrandingText "Published by Serit Fjordane IT"
 
-    def setTargets(self):
-        self.versionInfo.setDefaultValues(gitUrl="[git]https://github.com/shoyheim/client")
+;--------------------------------
 
-        # we don't have that branche yet
-        self.svnTargets["2.8"] = self.svnTargets["master"]
-
-        self.description = "Intern Skylagring"
-        self.displayName = "Intern Skylagring"
-        self.webpage = "https://serit.no/avdelinger/serit-fjordane-it/"
-
-    def setDependencies(self):
-        self.buildDependencies["craft-blueprints-skylagring"] = None
-        self.buildDependencies["dev-utils/cmake"] = None
-        self.buildDependencies["kde/frameworks/extra-cmake-modules"] = None
-        self.buildDependencies["dev-utils/breakpad-tools"] = None
-        self.runtimeDependencies["libs/zlib"] = None
-        self.runtimeDependencies["libs/sqlite"] = None
-        self.runtimeDependencies["libs/qt5/qtbase"] = None
-        self.runtimeDependencies["libs/qt5/qtmacextras"] = None
-        self.runtimeDependencies["libs/qt5/qttranslations"] = None
-        self.runtimeDependencies["libs/qt5/qtsvg"] = None
-        self.runtimeDependencies["libs/qt5/qtxmlpatterns"] = None
-        self.runtimeDependencies["qt-libs/qtkeychain"] = None
-        if self.options.dynamic.buildVfsWin:
-            self.runtimeDependencies["owncloud/client-plugin-vfs-win"] = None
-
-        if self.buildTarget != "master" and self.buildTarget < CraftVersion("2.6"):
-            self.runtimeDependencies["libs/qt5/qtwebkit"] = None
-
-        if not CraftCore.compiler.isWindows:
-            # the unit tests first need to get ported to Windows
-            if self.options.dynamic.buildTests:
-                self.buildDependencies["dev-utils/cmocka"] = None
+XPStyle on
+ManifestDPIAware true
 
 
+Name "@{productname}"
+Caption "@{productname}" ; @{version}"
 
-from Package.CMakePackageBase import *
+OutFile "@{setupname}"
 
-class Package(CMakePackageBase):
-    def __init__(self):
-        CMakePackageBase.__init__(self)
-        self.subinfo.options.fetch.checkoutSubmodules = True
-        # Pending PR to move to standard BUILD_TESTING: https://github.com/owncloud/client/pull/6917#issuecomment-444845521
-        self.subinfo.options.configure.args += " -DUNIT_TESTING={testing} ".format(testing="ON" if self.buildTests else "OFF")
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_MUI
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
+!define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_KEY "${regkey}"
+!define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME "Install_Mode"
+!define MULTIUSER_INSTALLMODE_INSTDIR "@{productname}"
+!define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY "${regkey}"
+!define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME "Install_Dir"
 
-        if 'OWNCLOUD_CMAKE_PARAMETERS' in os.environ:
-                self.subinfo.options.configure.args += os.environ['OWNCLOUD_CMAKE_PARAMETERS']
-        if self.subinfo.options.dynamic.buildVfsWin:
-            self.win_vfs_plugin = CraftPackageObject.get("owncloud/client-plugin-vfs-win")
-            self.subinfo.options.configure.args += f" -DVIRTUAL_FILE_SYSTEM_PLUGINS={self.win_vfs_plugin.instance.sourceDir()}"
+;Start Menu Folder Page Configuration
+Var StartMenuFolder
+!define MUI_STARTMENUPAGE_REGISTRY_ROOT "SHCTX"
+!define MUI_STARTMENUPAGE_REGISTRY_KEY "${regkey}"
+!define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
 
-        if "ENABLE_CRASHREPORTS" in os.environ:
-            self.subinfo.options.dynamic.enableCrashReporter = configparser.RawConfigParser.BOOLEAN_STATES.get(os.environ.get("ENABLE_CRASHREPORTS").lower())
-        if self.subinfo.options.dynamic.enableCrashReporter:
-            self.subinfo.options.configure.args += " -DWITH_CRASHREPORTER=ON"
+;!define MULTIUSER_USE_PROGRAMFILES64
+@{multiuser_use_programfiles64}
+;!define MULTIUSER_USE_PROGRAMFILES64
 
+@{nsis_include_internal}
+@{nsis_include}
 
-    @property
-    def applicationExecutable(self):
-        return os.environ.get('ApplicationExecutable', 'InternSky')
-
-    def fetch(self):
-        if self.subinfo.options.dynamic.buildVfsWin:
-            if not self.win_vfs_plugin.instance.fetch(noop=False):
-                return False
-        return super().fetch()
-
-    def unpack(self):
-        if self.subinfo.options.dynamic.buildVfsWin:
-            if not self.win_vfs_plugin.instance.unpack(noop=False):
-                return False
-        return super().unpack()
-
-    def install(self):
-        if not super().install():
-            return False
-        if CraftCore.compiler.isWindows:
-            # ensure we can find the sync-exclude.lst
-            configDir = Path(self.installDir()) / "config" / os.environ.get('ApplicationShortname', self.applicationExecutable)
-            if not configDir.exists():
-                configDir = Path(self.installDir()) / "etc" / os.environ.get('ApplicationShortname', self.applicationExecutable)
-            if configDir.exists():
-                if not utils.mergeTree(configDir, Path(self.installDir()) / "bin"):
-                    return False
-        return True
-
-    # Loosely based on https://chromium.googlesource.com/chromium/chromium/+/34599b0bf7a14ab21a04483c46ecd9b5eaf86704/components/breakpad/tools/generate_breakpad_symbols.py#92
-    def dumpSymbols(self, binaryFiles : [], dest : str) -> bool:
-        dest = Path(dest) / "symbols"
-        utils.cleanDirectory(dest)
-        moduleRe = re.compile("^MODULE [^ ]+ [^ ]+ ([0-9aA-fF]+) (.*)")
-        icuRe = re.compile(r"icudt\d\d.dll")
-        finderSyncExtRe = re.compile(r"FinderSyncExt")
-        cmdRe = re.compile(r".*cmd")
-        crashReporterRe = re.compile(r".*_crash_reporter")
-
-        appDsymDir = Path(CraftCore.standardDirs.craftRoot()) / "Applications/KDE/*.app.dSYM/Contents/Resources/DWARF"
-        hack = []
-        for exp in ["FinderSyncExt", "*cmd", "*_crash_reporter"]:
-            hack += glob.glob(str(appDsymDir / exp))
-
-        for f in hack:
-            CraftCore.log.warning(f'dump_symbols: {f} is removed')
-            os.remove(f)
-        print(hack)
-
-        for binaryFile in binaryFiles:
-            binaryFile = Path(binaryFile)
-            if CraftCore.compiler.isWindows and icuRe.match(binaryFile.name):
-                CraftCore.log.warning(f'dump_symbols: {binaryFile} is blacklisted because it has no symbols')
-                continue
-
-            if CraftCore.compiler.isMacOS and (finderSyncExtRe.match(binaryFile.name) or cmdRe.match(binaryFile.name) or crashReporterRe.match(binaryFile.name)):
-                CraftCore.log.warning(f'dump_symbols: {binaryFile} is blacklisted because we have no crash reporter for the finder extension, the cmdline client or the crash reporter itself')
-                continue
-
-            CraftCore.log.info(f"Dump symbols for: {binaryFile}")
-
-            command = ['dump_syms']
-            if CraftCore.compiler.isMacOS:
-                relPath = binaryFile.relative_to(self.archiveDir())
-                dSym = Path(CraftCore.standardDirs.craftRoot()) / relPath
-                bundleDir = list(filter(lambda x: x.name.endswith(".framework") or x.name.endswith(".app"), dSym.parents))
-                if bundleDir:
-                    dSym = bundleDir[-1]
-                dSym = Path(f"{dSym}.dSYM")
-                if dSym.exists():
-                    command += ["-g", dSym]
-            command.append(binaryFile)
-            with io.BytesIO() as out:
-                utils.system(command, stdout=out, stderr=subprocess.DEVNULL)
-                outBytes = out.getvalue()
-
-            if not outBytes:
-                CraftCore.log.warning(f"Found no valid output for {binaryFile}: {outBytes}")
-                continue
-
-            firstLine = str(outBytes.splitlines(1)[0], 'utf-8').strip()
-            CraftCore.log.info(f"Module line: {firstLine}")
-
-            if CraftCore.compiler.isWindows:
-                if firstLine.startswith("loadDataForPdb and loadDataFromExe failed for"):
-                    CraftCore.log.warning(f"Module does not contain debug symbols: {binaryFile}")
-                    return False
-
-            CraftCore.log.debug('regex: %s' % moduleRe)
-            moduleLine = moduleRe.match(firstLine)
-            if not moduleLine:
-                CraftCore.log.warning("Failed to parse dump_symbols output")
-                return False
-            CraftCore.log.debug('regex: %s' % moduleLine)
-            outputPath = dest / moduleLine.group(2) / moduleLine.group(1)
-
-            utils.createDir(outputPath)
-            symbolFile = (outputPath / moduleLine.group(2))
-            if CraftCore.compiler.isWindows:
-                symbolFile = symbolFile.with_suffix(".sym")
-            else:
-                symbolFile = f"{symbolFile}.sym"
-            with open(symbolFile, 'wb') as outputFile:
-                outputFile.write(outBytes)
-            CraftCore.log.info('Writing symbols to: %s' % symbolFile)
-        return True
-
-    def createPackage(self):
-        self.blacklist_file.append(os.path.join(self.packageDir(), 'blacklist.txt'))
-        self.scriptname = os.path.join(self.packageDir(), 'skylagring.nsi')
-        self.defines["appname"] = self.applicationExecutable
-        self.defines["apppath"] = "Applications/KDE/" + self.applicationExecutable + ".app"
-        self.defines["company"] = "Serit Fjordane IT"
-        self.defines["shortcuts"] = [{"name" : self.subinfo.displayName , "target" : f"{self.defines['appname']}{CraftCore.compiler.executableSuffix}", "description" : self.subinfo.description}]
-        self.defines["icon"] = Path(self.buildDir()) / ("src/gui/" + self.applicationExecutable + ".ico")
-        self.defines["pkgproj"] = Path(self.buildDir()) / "admin/osx/macosx.pkgproj"
+!include "MultiUser.nsh"
+!include "MUI2.nsh"
+!include "LogicLib.nsh"
+!include "x64.nsh"
+!include "process.nsh"
 
 
-        self.blacklist.append(re.compile(r"bin[/|\\](?!" + self.applicationExecutable + r").*" + re.escape(CraftCore.compiler.executableSuffix)))
+;!define MUI_ICON
+@{installerIcon}
+;!define MUI_ICON
 
-        self.ignoredPackages += ["binary/mysql"]
-        if not CraftCore.compiler.isLinux:
-            self.ignoredPackages += ["libs/dbus"]
+!insertmacro MUI_PAGE_WELCOME
+;!insertmacro MUI_PAGE_LICENSE
+@{license}
+;!insertmacro MUI_PAGE_LICENSE
 
-        if self.subinfo.options.dynamic.enableCrashReporter:
-            sep = '\\%s' % os.sep
-            regex = r"symbols%s.*" % sep
-            self.whitelist.append(re.compile(regex))
-        return super().createPackage()
+;!insertmacro MUI_FINISHPAGE_SHOWREADME
+@{readme}
+;!insertmacro MUI_FINISHPAGE_SHOWREADME
 
-    def preArchive(self):
-        if isinstance(self, NullsoftInstallerPackager):
-            archiveDir = Path(self.archiveDir())
-            # TODO: install translations to the correct location in the first place
-            for src, dest in [("bin",  ""), ("share/" + self.applicationExecutable + "/i18n",  "")]:
-                if not utils.mergeTree(archiveDir / src, archiveDir / dest):
-                    return True
-        else:
-            if self.subinfo.options.dynamic.enableCrashReporter:
-                binaries = utils.filterDirectoryContent(self.archiveDir(),
-                                                    whitelist=lambda x, root: utils.isBinary(os.path.join(root, x)),
-                                                    blacklist=lambda x, root: True)
-                if not self.dumpSymbols(binaries, self.archiveDebugDir()):
-                    return False
-        return super().preArchive()
+!insertmacro MULTIUSER_PAGE_INSTALLMODE
+
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
+
+!define MUI_COMPONENTSPAGE_NODESC
+;!insertmacro MUI_PAGE_COMPONENTS
+@{sections_page}
+;!insertmacro MUI_PAGE_COMPONENTS
+
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_TEXT "Run @{productname}"
+!define MUI_FINISHPAGE_RUN_FUNCTION "StartSkylagring"
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_LANGUAGE "English"
+
+SetDateSave on
+SetDatablockOptimize on
+CRCCheck on
+SilentInstall normal
+
+Function .onInit
+    !insertmacro MULTIUSER_INIT
+    !if "@{architecture}" == "x64"
+        ${IfNot} ${RunningX64}
+            MessageBox MB_OK|MB_ICONEXCLAMATION "This installer can only be run on 64-bit Windows."
+            Abort
+        ${EndIf}
+    !endif
+	
+;	SetRegView 32
+;	ReadRegStr $0 HKLM "${uninstkey}" "UninstallString"
+;	SetRegView lastused
+;    ${If} ${RunningX64}
+;  	${AndIf} $0 == ""
+;	  SetRegView 64
+;	  ReadRegStr $0 HKLM "${uninstkey}" "UninstallString"
+;	  SetRegView lastused
+;  	${Endif}
+    
+;	${If} $0 == ""
+;	  MessageBox MB_OK|MB_ICONEXCLAMATION "Found no previous installation location at '${uninstkey}', result: $0"
+;	${Else}
+;	  StrCpy $INSTDIR $0
+;	  MessageBox MB_OK|MB_ICONEXCLAMATION "Found previous installation location $0 at '${uninstkey}'"
+;	${Endif}
+FunctionEnd
+
+Function .onInstSuccess
+	SetShellVarContext current
+	${If} ${FileExists} "$LOCALAPPDATA\@{productname}\*.*"
+		${IfNot} ${FileExists} "$APPDATA\@{productname}\*.*"
+			CreateDirectory "$APPDATA\@{productname}"
+			CopyFiles "$LOCALAPPDATA\@{productname}\*.cfg" "$APPDATA\@{productname}"
+		${Endif}
+	${Endif}
+	${If} ${Silent}
+		Call StartSkylagring
+	${Endif}
+FunctionEnd
+	
+Function StartSkylagring
+    	ExecShell "" "$INSTDIR\@{appname}.exe"
+FunctionEnd
+
+Function un.onInit
+    !insertmacro MULTIUSER_UNINIT
+FunctionEnd
+
+;--------------------------------
+
+AutoCloseWindow false
+
+!macro UninstallExisting exitcode uninstcommand
+Push `${uninstcommand}`
+Call UninstallExisting
+Pop ${exitcode}
+!macroend
+Function UninstallExisting
+Exch $1 ; uninstcommand
+Push $2 ; Uninstaller
+Push $3 ; Len
+StrCpy $3 ""
+StrCpy $2 $1 1
+StrCmp $2 '"' qloop sloop
+sloop:
+	StrCpy $2 $1 1 $3
+	IntOp $3 $3 + 1
+	StrCmp $2 "" 0 sloop
+	IntOp $3 $3 - 1
+	Goto run
+qloop:
+	StrCmp $3 "" 0 +2
+	StrCpy $1 $1 "" 1 ; Remove initial quote
+	IntOp $3 $3 + 1
+	StrCpy $2 $1 1 $3
+	StrCmp $2 "" +2
+	StrCmp $2 '"' 0 qloop
+run:
+	StrCpy $2 $1 $3 ; Path to uninstaller
+	StrCpy $1 161 ; ERROR_BAD_PATHNAME
+	GetFullPathName $3 "$2\.." ; $InstDir
+;	MessageBox MB_OK|MB_ICONEXCLAMATION "Uninstalling with uninstaller $2 in $3"
+	IfFileExists "$2" 0 +4
+	ExecWait '"$2" /S _?=$3' $1 ; This assumes the existing uninstaller is a NSIS uninstaller, other uninstallers don't support /S nor _?=
+	IntCmp $1 0 "" +2 +2 ; Don't delete the installer if it was aborted
+	Delete "$2" ; Delete the uninstaller
+	RMDir "$3" ; Try to delete $InstDir
+	RMDir "$3\.." ; (Optional) Try to delete the parent of $InstDir
+Pop $3
+Pop $2
+Exch $1 ; exitcode
+FunctionEnd
+
+
+; beginning (invisible) section
+Section
+  !insertmacro EndProcessWithDialog
+  
+  SetRegView 32
+  ReadRegStr $0 HKLM "${uninstkey}" "UninstallString"
+  SetRegView lastused
+  ${If} ${RunningX64}
+  ${AndIf} $0 == ""
+		SetRegView 64
+		ReadRegStr $0 HKLM "${uninstkey}" "UninstallString"
+		SetRegView lastused
+  ${Endif}
+  
+  ${If} $0 == ""
+	StrCpy $0 "$INSTDIR\uninstall.exe"
+  ${Endif}
+  
+;  MessageBox MB_OK|MB_ICONEXCLAMATION "Try uninstall macro with $0"
+  !insertmacro UninstallExisting $0 $0
+	${IfNot} ${Silent} 
+	${AndIf} $0 > 0
+	${AndIfNot} $0 == 161 
+		MessageBox MB_YESNO|MB_ICONSTOP "Failed to uninstall old version, continue anyway? Error: $0" /SD IDYES IDYES +2
+			Abort
+	${EndIf}
+  ;ExecWait '"$MultiUser.InstDir\uninstall.exe" /S _?=$MultiUser.InstDir'
+  ;ExecWait '"$MultiUser.InstDir\uninstall.exe"'
+  @{preInstallHook}
+  WriteRegStr SHCTX "${regkey}" "Install_Dir" "$INSTDIR"
+  WriteRegStr SHCTX "${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY}" "${MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME}" "$MultiUser.InstallMode"
+  ; write uninstall strings
+  WriteRegStr SHCTX "${uninstkey}" "DisplayName" "@{productname}"
+  WriteRegStr SHCTX "${uninstkey}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr SHCTX "${uninstkey}" "DisplayIcon" "$INSTDIR\@{iconname}"
+  WriteRegStr SHCTX "${uninstkey}" "URLInfoAbout" "@{website}"
+  WriteRegStr SHCTX "${uninstkey}" "Publisher" "@{company}"
+  WriteRegStr SHCTX "${uninstkey}" "DisplayVersion" "@{version}"
+  WriteRegDWORD SHCTX "${uninstkey}" "EstimatedSize" "@{estimated_size}"
+  
+  WriteRegStr HKCU "${runPath}" "@{appname}" "$INSTDIR\@{appname}.exe"
+
+  @{registry_hook}
+
+  SetOutPath $INSTDIR
+
+
+; package all files, recursively, preserving attributes
+; assume files are in the correct places
+
+File /a "@{dataPath}"
+File /a "@{7za}"
+File /a "@{icon}"
+!if "@{architecture}" == "x64"
+	nsExec::ExecToLog '"$INSTDIR\7za.exe" x -r -y "$INSTDIR\@{dataName}" -o"$INSTDIR"'
+!else
+	nsExec::ExecToLog '"$INSTDIR\7za_32.exe" x -r -y "$INSTDIR\@{dataName}" -o"$INSTDIR"'
+!endif
+Pop $0
+Pop $1
+${If} $0 == "error"	
+	MessageBox MB_OK|MB_ICONEXCLAMATION "Unpacking failed using $INSTDIR. Installation failure. $1"
+	Abort
+${ElseIf} $0 == "timout"
+	MessageBox MB_OK|MB_ICONEXCLAMATION "Unpacking timed out. Installation failure. $1"
+	Abort
+${Else}
+	!if "@{architecture}" == "x64"
+		Delete "$INSTDIR\7za.exe"
+	!else
+		Delete "$INSTDIR\7za_32.exe"
+	!endif
+	Delete "$INSTDIR\@{dataName}"
+${Endif}
+
+AddSize @{installSize}
+
+WriteUninstaller "uninstall.exe"
+
+SectionEnd
+
+; create shortcuts
+@{shortcuts}
+
+;  allow to define additional sections
+@{sections}
+
+
+; Uninstaller
+; All section names prefixed by "Un" will be in the uninstaller
+
+UninstallText "This will uninstall @{productname}."
+
+Section "Uninstall"
+!insertmacro EndProcessWithDialog
+
+DeleteRegKey SHCTX "${uninstkey}"
+DeleteRegKey SHCTX "${regkey}"
+
+!insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
+RMDir /r "$SMPROGRAMS\$StartMenuFolder"
+
+@{uninstallFiles}
+@{uninstallDirs}
+
+SectionEnd
+
+;  allow to define additional Un.sections
+@{un_sections}
